@@ -97,7 +97,7 @@ class Mbiz_Setup_Model_Cms extends Mage_Core_Model_Abstract
             return Mage::getModel('cms/block')
                 ->setData($data)
                 ->save()
-            ;
+                ;
         }
     }
 
@@ -213,6 +213,80 @@ class Mbiz_Setup_Model_Cms extends Mage_Core_Model_Abstract
             $_pages[] = $this->createPage($page, $directory);
         }
         return $_pages;
+    }
+
+    /**
+     * Add Page Redirects
+     * @param array $redirects The Page Redirects
+     *  <p>
+     *  [
+     *      [ // One data array per redirect
+     *          'from_url'            => '', // Title of the block
+     *          'to_url'       => '', // Identifier of the block
+     *          'stores'           => [ // The stores
+     *              'admin',
+     *              'default',
+     *          ],
+     *          // …
+     *      ],
+     *      // …
+     *  ]
+     *  </p>
+     * @return array
+     */
+
+    public function createPageRedirects($redirects)
+    {
+        $_redirects = array();
+        /** @var Mage_Core_Model_Url_Rewrite $rewrite */
+
+        foreach ($redirects as $redirect){
+            $_redirects[] = $this->createPageRedirect($redirect);
+        }
+    }
+
+    /**
+     * Add Page Redirect
+     * @param array $data The page redirects
+     *  <p>This method can't update redirect like createBlock update blocks.</p>
+     *  <p>
+     *  [
+     *      'from_url'            => '', // Title of the block
+     *          'to_url'       => '', // Identifier of the block
+     *          'stores'           => [ // The stores
+     *              'admin',
+     *              'default',
+     *          ],
+     *      // …
+     *  ]
+     *  </p>
+     * @param string $directory Base directory where are the "content_file" files
+     * @return Mage_Cms_Model_Page
+     */
+
+    public function createPageRedirect($redirect)
+    {
+        $urlRewrite = Mage::getModel('core/url_rewrite');
+
+        foreach($redirect["stores"] as $store) {
+
+            $storeId = Mage::app()->getStore($store)->getId();
+
+            $urlRewrite->loadByIdPath($redirect["to_url"] . $store);
+
+            $urlRewrite->setStoreId($storeId);
+            $urlRewrite->setIdPath($redirect["to_url"] . "_" . $store);
+            $urlRewrite->setRequestPath($redirect["from_url"]);
+            $urlRewrite->setTargetPath($redirect["to_url"]);
+            $urlRewrite->setOptions('RP');
+            $urlRewrite->setIsSystem(0);
+            try{
+                $urlRewrite->save();
+            }catch(Exception $e){
+                throw new ErrorException($e->getMessage());
+                Mage::logException($e);
+            }
+        }
     }
 
     /**
