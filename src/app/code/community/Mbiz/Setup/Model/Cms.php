@@ -240,7 +240,7 @@ class Mbiz_Setup_Model_Cms extends Mage_Core_Model_Abstract
         $_redirects = array();
         /** @var Mage_Core_Model_Url_Rewrite $rewrite */
 
-        foreach ($redirects as $redirect){
+        foreach ($redirects as $redirect) {
             $_redirects[] = $this->createPageRedirect($redirect);
         }
     }
@@ -267,24 +267,19 @@ class Mbiz_Setup_Model_Cms extends Mage_Core_Model_Abstract
     public function createPageRedirect($redirect)
     {
         $urlRewrite = Mage::getModel('core/url_rewrite');
-
-        foreach($redirect["stores"] as $store) {
-
+        foreach ($redirect["stores"] as $store) {
             $storeId = Mage::app()->getStore($store)->getId();
-
             $urlRewrite->loadByIdPath($redirect["to_url"] . $store);
-
             $urlRewrite->setStoreId($storeId);
-            $urlRewrite->setIdPath($redirect["to_url"] . "_" . $store);
+            $urlRewrite->setIdPath(sprintf('%s_%s', $redirect["to_url"], $store));
             $urlRewrite->setRequestPath($redirect["from_url"]);
             $urlRewrite->setTargetPath($redirect["to_url"]);
             $urlRewrite->setOptions('RP');
             $urlRewrite->setIsSystem(0);
-            try{
+            try {
                 $urlRewrite->save();
-            }catch(Exception $e){
+            } catch (Exception $e) {
                 throw new ErrorException($e->getMessage());
-                Mage::logException($e);
             }
         }
     }
@@ -388,5 +383,4 @@ class Mbiz_Setup_Model_Cms extends Mage_Core_Model_Abstract
         }
         return $_stores;
     }
-
 }
